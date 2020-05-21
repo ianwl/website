@@ -33,7 +33,7 @@ jobs:
       - run: sudo apt update
       - run: sudo apt-get install -y git-ftp
       - run: sudo apt install yarn | sudo sh & yarn -v
-      - run: cd src && yarn install && yarn build
+      - run: cd src && yarn install && yarn build:"$env_name"
       - run: git config git-ftp.syncroot .
       - run:
           name: git ftp
