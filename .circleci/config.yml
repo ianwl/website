@@ -1,0 +1,41 @@
+# PHP CircleCI 2.0 configuration file
+#
+# Check https://circleci.com/docs/2.0/language-php/ for more details
+#
+version: 2
+jobs:
+  build:
+    branches:
+      only:
+        - release/prod
+        - release
+        - ci-test
+    docker:
+      # Specify the version you desire here
+      - image: circleci/php:7.3-node-browsers
+
+      # Specify service dependencies here if necessary
+      # CircleCI maintains a library of pre-built images
+      # documented at https://circleci.com/docs/2.0/circleci-images/
+      # Using the RAM variation mitigates I/O contention
+      # for database intensive operations.
+      # - image: circleci/mysql:5.7-ram
+      #
+      # - image: redis:2.8.19
+
+    steps:
+      - checkout
+      - run:
+          name: "Setup custom environment variables"
+          command: echo 'export env_name="${CIRCLE_BRANCH}"' >> $BASH_ENV
+      - run: curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
+      - run: echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
+      - run: sudo apt update
+      - run: sudo apt-get install -y git-ftp
+      - run: sudo apt install yarn | sudo sh & yarn -v
+      - run: cd src && yarn install && yarn build
+      - run: git config git-ftp.syncroot .
+      - run:
+          name: git ftp
+          command: sh ./.circleci/push_ftp.sh
+          no_output_timeout: 30m
