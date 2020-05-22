@@ -8,7 +8,7 @@ jobs:
     branches:
       only:
         - release/prod
-        - release
+        - release/dev
         - ci-test
     docker:
       # Specify the version you desire here
