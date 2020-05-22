@@ -27,7 +27,7 @@ jobs:
       - checkout
       - run:
           name: "Setup custom environment variables"
-          command: echo 'export env_name="${CIRCLE_BRANCH}"' >> $BASH_ENV
+          command: echo 'export env_name="${CIRCLE_BRANCH/release\//}"' >> $BASH_ENV
       - run: curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
       - run: echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
       - run: sudo apt update
