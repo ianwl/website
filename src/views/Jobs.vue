@@ -28,12 +28,12 @@
       <div v-show="screenwidth<810 && showRightBtn === true" class="right-btn" @click="turnRight">
         <img src="@/assets/img/icons8-expand_arrow_2x.png" alt="jobs-right-bnt" />
       </div>
-      <div class="cards" :style="{left:`${left}px`}">
+      <div v-if="Object.keys(welfare).length>0" class="cards" :style="{left:`${left}px`}">
         <div class="outer">
-          <span>{{welfare.category[0]}}</span>
+          <span>{{welfareTitleToIndexMap[0]}}</span>
           <div class="card">
             <div class="inner">
-              <div v-for="(item, index) in welfare.basic" :key="index" class="content">
+              <div v-for="(item, index) in welfare[welfareTitleToIndexMap[0]]" :key="index" class="content">
                 <div class="subject">{{item.name}}</div>
                 <div v-html="item.content"></div>
               </div>
@@ -41,16 +41,16 @@
           </div>
         </div>
         <div class="outer">
-          <span>{{welfare.category[1]}}</span>
+          <span>{{welfareTitleToIndexMap[1]}}</span>
           <div class="card">
             <div class="inner">
-              <div v-for="(item, index) in welfare.bonus.slice(0, 4)" :key="index" class="content">
+              <div v-for="(item, index) in welfare[welfareTitleToIndexMap[1]].slice(0, 4)" :key="index" class="content">
                 <div class="subject">{{item.name}}</div>
                 <div v-html="item.content"></div>
               </div>
               <div class="border"></div>
               <div
-                v-for="(item, index) in welfare.bonus.slice(4, 10)"
+                v-for="(item, index) in welfare[welfareTitleToIndexMap[1]].slice(4, 10)"
                 :key="'welfare'+index"
                 class="content"
               >
@@ -61,10 +61,10 @@
           </div>
         </div>
         <div class="outer">
-          <span>{{welfare.category[2]}}</span>
+          <span>{{welfareTitleToIndexMap[2]}}</span>
           <div class="card">
             <div class="inner">
-              <div v-for="(item, index) in welfare.vacation" :key="index" class="content">
+              <div v-for="(item, index) in welfare[welfareTitleToIndexMap[2]]" :key="index" class="content">
                 <div class="subject">{{item.name}}</div>
                 <div v-html="item.content"></div>
               </div>
@@ -74,16 +74,16 @@
       </div>
     </div>
     <div class="vacancy">
-      <div class="title">{{jobs.title}}</div>
-      <div class="content">{{jobs.content}}</div>
+      <div class="title">最新職缺</div>
+      <div class="content">技最新職缺，我們將不定期更新最新職缺，若有適合您的職缺可以進行訂閱，系統將自動通知您的信箱。</div>
       <div class="subscribe" @click="toBottom(stepBottom)">
         立即訂閱
         <img src="@/assets/img/icons8-expand_arrow-1_2x.png" alt="subscribe-btn" />
       </div>
     </div>
     <div class="vacancy-card">
-      <div v-for="(item, index) in jobs.vacancy" :key="index">
-        <JobCard v-bind="item" :selected="selectedJOb" :screenwidth="screenwidth" ref="vacancy" />
+      <div v-for="(item, index) in jobs" :key="index">
+        <JobCard v-bind="item" :selected="selectedJOb" :screenwidth="screenwidth" ref="vacancy"/>
       </div>
     </div>
     <transition name="background-opacity">
@@ -162,19 +162,40 @@
 
 <script>
 // @ is an alias to /src
-import json from "@/assets/json/jobs.json";
 import JobCard from "@/components/JobCard.vue";
+import {fetchRecruiting} from "@/api/recruiting";
+import {groupBy} from "@/utils";
 
 export default {
   name: "Jobs",
   components: {
     JobCard
   },
+  created() {
+    fetchRecruiting([]).then(response=>{
+
+      if(response.success){
+
+        this.jobs=response.rows.jobs
+        const tempWelfare =response.rows.welfare
+
+        this.welfare=groupBy(tempWelfare,'title')
+
+      }
+
+    })
+  },
   props: ["screenwidth"],
   data() {
     return {
-      welfare: json.recruitment.welfare,
-      jobs: json.recruitment.jobs,
+      baseDomain: process.env.VUE_APP_BASE_DOMAIN,
+      welfare: {},
+      jobs: [],
+      welfareTitleToIndexMap: {
+        0: '基本權益',
+        1: '獎金發放',
+        2: '休假申請'
+      },
       stepBottom: 200, //此数据是控制动画快慢的
       stepJob: 50,
       selectedJOb: "",
@@ -196,10 +217,10 @@ export default {
       return img.src;
     },
     numOfJobs: function() {
-      return this.jobs.vacancy.length;
+      return this.jobs.length;
     },
     searchJob: function() {
-      let result = this.jobs.vacancy.map(jobs => jobs.name);
+      let result = this.jobs.map(jobs => jobs.name);
       // this.$set(this.config, 'options', result)
       // let result = this.jobs.vacancy.map(item => Object.values(item)[1]);
       return result;
@@ -243,7 +264,7 @@ export default {
     },
     handleMenuClick(e) {
       let height = this.$refs.vacancy[e.key].$el.offsetTop - 30;
-      this.selectedJOb = this.jobs.vacancy[e.key].name;
+      this.selectedJOb = this.jobs[e.key].name;
       this.toJobCard(this.stepJob, height);
     },
     toJobCard(i, height) {

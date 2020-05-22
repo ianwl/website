@@ -23,19 +23,21 @@
       ref="customers"
     >
       <img src="@/assets/img/icons8-expand_arrow-3_2x.png" class="arrow" @click="toCustomers(step)" />
-      <div v-for="(item, index) in data.customers" :key="index" class="content">
+
+      <div v-for="(item, index) in data" :key="index" class="content">
         <div class="customers-list">
-          <video class="sleep-video" v-if="item.type == 'video'" controls>
-            <source :src="item.url" type="video/mp4" />
+          <video class="sleep-video" v-if="item.videolist[0]" controls>
+            <source :src="(baseDomain+item.videolist[0])" type="video/mp4" />
           </video>
-          <img :src="item.url" v-if="item.type == 'image'" />
+          <img v-else-if="baseDomain" :src="(baseDomain + item.imgList[0])"/>
           <div class="customers-content">
-            <div class="content-cht">{{item.contentCht}}</div>
-            <div v-show="screenwidth>810" class="content-eng">{{item.contentEng}}</div>
+            <div class="content-cht">{{item.cn_content}}</div>
+            <div v-show="screenwidth>810" class="content-eng">{{item.en_content}}</div>
           </div>
-          <div v-show="screenwidth<810" class="content-eng">{{item.contentEng}}</div>
+          <div v-show="screenwidth<810" class="content-eng">{{item.en_content}}</div>
         </div>
       </div>
+
     </div>
     <div class="footer" v-show="false">
       <div class="media">
@@ -49,13 +51,24 @@
 
 <script>
 import data from "@/assets/json/customers.json";
+import {fetchCustomer} from "@/api/customerArticle";
 export default {
   name: "Customers",
+  created() {
+    fetchCustomer([]).then(response=>{
+
+      if(response.success){
+        this.data=response.rows
+      }
+
+    })
+  },
   props: ["screenwidth"],
   data() {
     return {
-      data: data,
-      step: 50
+      data: [],
+      step: 50,
+      baseDomain: process.env.VUE_APP_BASE_DOMAIN
     };
   },
   components: {},
@@ -231,7 +244,7 @@ export default {
       margin: 20px auto;
       padding: 0 30px;
       display: flex;
-      
+
       justify-content: center;
       align-items: center;
       video,

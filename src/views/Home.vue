@@ -1,23 +1,23 @@
 <template>
   <div class="home">
     <img
-      v-for="(item,k) in image"
-      :key="k"
+      v-for="(item,k) in data"
+      :key="'image'+k"
       :alt="`Big image${k}`"
-      :src="item.src"
+      :src="(baseDomain +'/storage/home/'+ item.img)"
       class="big-image"
       :style="{left:`${screenwidth*(k - page)}px`}"
       v-touch:swipeleft="leftSlide"
       v-touch:swiperight="rightSlide"
     />
     <!-- <HelloWorld msg="Welcome to Your Vue.js App"/> -->
-    <div v-for="(item,k) in data.homepage" :key="item.titleCht" class="page" v-show="page === k">
+    <div v-for="(item,k) in data" :key="'text'+item.id" class="page" v-show="page === k">
       <div class="container">
         <transition name="fadeTitle">
-          <div v-show="show && page === k" class="title">{{item.title}}</div>
+          <div v-show="show && page === k" class="title">{{item.main_title}}</div>
         </transition>
         <transition name="fadeTitle">
-          <div v-show="show && page === k" class="content">{{item.content}}</div>
+          <div v-show="show && page === k" class="content">{{item.main_content}}</div>
         </transition>
         <div class="more-content" @click="showBottom = !showBottom">
           <img class="icon-more" src="@/assets/img/icons8-more-1_2x.png" alt="Icons8 more" />
@@ -26,8 +26,8 @@
       </div>
       <transition name="fadeBottom">
         <div v-show="showBottom" class="bottom-content">
-          <h1>{{item.titleCht}}</h1>
-          <span>{{item.More}}</span>
+          <h1>{{item.subtitle}}</h1>
+          <span>{{item.subcontent}}</span>
         </div>
       </transition>
       <transition name="opacity">
@@ -56,14 +56,25 @@
 <script>
 // @ is an alias to /src
 // import HelloWorld from '@/components/HelloWorld.vue'
-import data from "@/assets/json/home.json";
+import {fetchHome} from "@/api/home";
 
 export default {
   name: "Home",
   props: ["screenwidth"],
+  created() {
+    fetchHome([]).then(response=>{
+
+      console.log(response)
+      if(response.success){
+        this.data=response.rows
+      }
+
+    })
+  },
   data() {
     return {
-      data: data,
+      baseDomain: process.env.VUE_APP_BASE_DOMAIN,
+      data: [],
       show: false,
       showBottom: false,
       page: 0,
